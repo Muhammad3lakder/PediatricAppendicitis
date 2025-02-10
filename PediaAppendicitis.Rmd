@@ -24,6 +24,7 @@ library(ggthemes)
 library(readxl)
 library(knitr)
 library(kableExtra)
+library(janitor)
 ```
 
 # Introdution
@@ -261,8 +262,7 @@ null_dist <- pedia_appen_raw |>
   calculate(stat = "diff in props", order = c("yes", "no"))
 
 pvale <- null_dist |>
-  get_p_value(obs_stat = obs_stat, direction = "two sided") 
-  
+  get_p_value(obs_stat = obs_stat, direction = "two sided")
 ```
 
 
@@ -303,7 +303,7 @@ ci |>
 
 
 
-```{r echo=FALSE}
+```{r echo=FALSE, warning=FALSE}
 #| label: hypothsis testing with randomization between diagnosis and appendix diameter
 
 set.seed(202025)
@@ -345,7 +345,7 @@ ci2 <- boot_dist2 |>
 
 ci2 |>
   kable(
-    digits = 2, 
+    digits = 2,
     caption = "95% confidence interval for the difference in mean between \n patients diagnosed with appendicitis or no appendicitis."
   )
 ```
@@ -354,7 +354,14 @@ ci2 |>
 
 ### Modeling
 
-So we foun
+- To help the health workers make more informed decisions (i.e, Accurately diagnosing the appendicitis) we would use machine learning.
+
+We will build Supervised explainable models like logistic regression then test and validate the model.
+
+
+So we will use **cross validation** as way to build the model then we would use **ROC** to check the models precision and accuracy.
+
+
 ```{r include=FALSE}
 #| label: preparing the dataset for the model
 set.seed(22025)
@@ -392,15 +399,24 @@ pedia_appen_model <- logistic_reg() |>
 tidy(pedia_appen_model)
 ```
 
-```{r include=FALSE}
+```{r echo=FALSE}
 #| label: Testing pediatric appendicitis model0
 
 pedia_appen_aug <- augment(pedia_appen_model,
   new_data = pedia_appen_test
 )
 
-pedia_appen_aug
+pedia_appen_aug |>
+  sample_n(10) |>
+  clean_names() |>
+  select(pred_class, pred_appendicitis, pred_no_appendicitis, alvarado_score) |>
+  kable(
+    digits = 2,
+    caption = "A Model to Diagnose Appendicitis With Avarado Score"
+  )
 ```
+
+
 
 ```{r echo=FALSE}
 #| label: model evaluation0
@@ -413,10 +429,13 @@ pedia_appen_aug |>
     p = round(n / sum(n), 2),
     decision = case_when(
       .pred_class == "appendicitis" & Diagnosis == "appendicitis" ~ "True positive",
-      .pred_class == "appendicitis" & Diagnosis == 0 ~ "False positive",
+      .pred_class == "appendicitis" & Diagnosis == "no appendicitis" ~ "False positive",
       .pred_class == "no appendicitis" & Diagnosis == "appendicitis" ~ "False negative",
       .pred_class == "no appendicitis" & Diagnosis == "no appendicitis" ~ "True negative"
     )
+  ) |>
+  kable(
+    caption = "Precision and Accuracy of Model to Diagnose Appendicitis With Avarado Score"
   )
 ```
 
@@ -436,6 +455,8 @@ ggplot(pedia_appen_roc, aes(x = 1 - specificity, y = sensitivity)) +
   coord_equal()
 ```
 
+
+
 ```{r include=FALSE}
 #| label: training the model
 set.seed(22025)
@@ -447,14 +468,21 @@ pedia_appen_model1 <- logistic_reg() |>
 tidy(pedia_appen_model1)
 ```
 
-```{r include=FALSE}
+```{r echo=FALSE}
 #| label: Testing pediatric appendicitis model
 
 pedia_appen_aug1 <- augment(pedia_appen_model1,
   new_data = pedia_appen_test
 )
 
-pedia_appen_aug1
+pedia_appen_aug1 |>
+  sample_n(10) |>
+  clean_names() |>
+  select(pred_class, pred_appendicitis, pred_no_appendicitis) |>
+  kable(
+    digits = 2,
+    caption = "A Model to Diagnose Appendicitis With Avarado Score, Appendix_Diameter, Weight and BMI"
+  )
 ```
 
 ```{r echo=FALSE}
@@ -468,10 +496,13 @@ pedia_appen_aug1 |>
     p = round(n / sum(n), 2),
     decision = case_when(
       .pred_class == "appendicitis" & Diagnosis == "appendicitis" ~ "True positive",
-      .pred_class == "appendicitis" & Diagnosis == 0 ~ "False positive",
+      .pred_class == "appendicitis" & Diagnosis == "no appendicitis" ~ "False positive",
       .pred_class == "no appendicitis" & Diagnosis == "appendicitis" ~ "False negative",
       .pred_class == "no appendicitis" & Diagnosis == "no appendicitis" ~ "True negative"
     )
+  ) |>
+  kable(
+    caption = "Precision and Accuracy of Model to Diagnose Appendicitis With Avarado Score, Appendix_Diameter, Weight and BMI"
   )
 ```
 
@@ -491,7 +522,7 @@ ggplot(pedia_appen_roc1, aes(x = 1 - specificity, y = sensitivity)) +
   coord_equal()
 ```
 
-```{r echo=FALSE}
+```{r echo=FALSE, fig.cap="Comparing the Accuracy and Precision of both Models"}
 #| label: Comparing models
 
 pedia_appen_roc <- pedia_appen_roc |>
@@ -509,16 +540,18 @@ bind_rows(
   coord_equal()
 ```
 
-```{r}
-pedia_appen_aug |>
-  roc_auc(
-    Diagnosis,
-    .pred_appendicitis
-  )
 
-pedia_appen_aug1 |>
-  roc_auc(
-    Diagnosis,
-    .pred_appendicitis
-  )
+- The second model that used **Ultra-sonography** results showed lower **False positives and negatives**. per table above.
+
+
+### Diagnosing
+
+```{r echo=FALSE}
+#| label: Predicting appendicitis outcome
+
+case <- tibble(Alvarado_Score = 6, Appendix_Diameter = 10, Weight = 30, BMI = 20)
+
+
+predict(pedia_appen_model1, case, type="prob")
 ```
+
