@@ -29,13 +29,22 @@ library(janitor)
 
 # Introdution
 
-[In 2015, approximately 11.6 million cases of appendicitis were reported, resulting in around 50,100 deaths worldwide.](https://doi.org/10.1016/S0140-6736(16)31012-1) Also appendicitis is one of the most common and significant causes of sudden abdominal pain, So diagnosing and treating this disease should be made as quickly as possible. There are many criteria to do so such as taking a history, physical examination, risk scores (e.g Alvarado Score) and imaging techiqies like ultra-sonography and CT.
+[In 2015, approximately 11.6 million cases of appendicitis were reported, resulting in approximately 50,100 deaths worldwide](https://doi.org/10.1016/S0140-6736(16)31012-1), deaths could be attributed to many reasons, such as lack of access to medicine, quality of care, and medical diagnostic error.
 
-The cost of the diagnosis could be improved for example using US instead of CT, accuracy could be also improved using Machine learning. [One recent study built a model to predict appendicitis in pediatrics using Interpretable unsupervised machine learning method](https://doi.org/10.1016/j.media.2023.103042).
+Helping healthcare professionals make more informed decisions is one way to reduce diagnostic errors. 
 
-[Since a lot of models has been built using just history and physical examinatin as predictors, we would use the same dataset to explore the disease for a bit then build models that focus on ultra-sonography as a way to diagnose appendicitis.](https://doi.org/10.5281/zenodo.7711412)
+There are many criteria to do this, such as history taking, physical examination, risk scores (e.g., Alvarado score), and imaging techniques such as ultrasound and CT.
+
+The accuracy of the diagnosis could be improved, for example, by using machine learning. [A recent study built a model to predict appendicitis in pediatrics using an interpretable unsupervised machine learning method](https://doi.org/10.1016/j.media.2023.103042).
+
+[Since a lot of models have been built using just history and physical examinin as predictors, we would use the same dataset to explore the disease for a bit then build models that focus on ultrasonography as a way to diagnose appendicitis.](https://doi.org/10.5281/zenodo.7711412)
+
+
 
 # Methodology
+
+[The dataset was acquired in a retrospective study from a cohort of pediatric patients admitted with abdominal pain to Children’s Hospital St. Hedwig in Regensburg, Germany.](https://doi.org/10.5281/zenodo.7711412)
+
 
 ```{r include=FALSE}
 #| label: Loading pediatric appendicitis dataset
@@ -44,7 +53,9 @@ pedia_appen_raw <- read_excel("data/app_data.xlsx",
 )
 ```
 
--   Taking a look at the data
+
+
+- Taking a look at the dataset
 
 ```{r echo=FALSE}
 #| label: A sample look of the dataset
@@ -52,11 +63,17 @@ pedia_appen_raw <- read_excel("data/app_data.xlsx",
 pedia_appen_raw |>
   drop_na(Sex, US_Performed, Severity, Management, Diagnosis) |>
   select(Sex, US_Performed, Severity, Management, Diagnosis) |>
+  glimpse() |>
   sample_n(10) |>
   kable(
     caption = "First Ten Rows of the Pediatric Appendicitis Dataset"
   )
+
+
+
 ```
+
+
 
 ## Some Plots
 
@@ -88,6 +105,9 @@ pedia_appen_raw |>
   ) |>
   kable_styling(latex_options = c("hold_position", "striped"))
 ```
+
+
+
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Prevalence of Appendicitis by Gender"}
 #| label: A Bar plot for the Diagnosis
@@ -131,7 +151,9 @@ pedia_appen_raw |>
   )
 ```
 
--   Figure 2 shows that the prevalence in the appendicitis is more males than females which is consistent with existing finding, but it is not substantial.
+
+
+- Figure 2 shows that the prevalence in the appendicitis is more males than females which is consistent with existing finding, but it is not substantial.
 
 ```{r fig.cap="Alvarado Risk Score .vs Appendicitis Diagnosis"}
 pedia_appen_raw |>
