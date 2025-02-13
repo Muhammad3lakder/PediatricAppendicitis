@@ -3,8 +3,8 @@ title: "Exploring Pediatric Appendicitis"
 author: "Muhammad Alakhdar"
 date: "`r Sys.Date()`"
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -66,11 +66,13 @@ pedia_appen_raw |>
   glimpse() |>
   sample_n(10) |>
   kable(
-    caption = "First Ten Rows of the Pediatric Appendicitis Dataset"
+    caption = "First Ten Rows of the Pediatric Patients Dataset"
   )
 
 
+missing_values <- sum(is.na(pedia_appen_raw))
 
+cat("Number of missing values is", missing_values)
 ```
 
 
@@ -108,7 +110,7 @@ pedia_appen_raw |>
 
 
 
-
+ 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Prevalence of Appendicitis by Gender"}
 #| label: A Bar plot for the Diagnosis
 
@@ -153,7 +155,7 @@ pedia_appen_raw |>
 
 
 
-- Figure 2 shows that the prevalence in the appendicitis is more males than females which is consistent with existing finding, but it is not substantial.
+- Figure 2 shows that the prevalence in appendicitis is more males than females, which is consistent with existing findings, but it is not that substantial.
 
 ```{r fig.cap="Alvarado Risk Score .vs Appendicitis Diagnosis"}
 pedia_appen_raw |>
@@ -174,38 +176,61 @@ pedia_appen_raw |>
   drop_na(Alvarado_Score, Diagnosis) |>
   group_by(Diagnosis) |>
   summarize(
-    mean = mean(Alvarado_Score)
+    mean = round(mean(Alvarado_Score), 2),
+    median = round(median(Alvarado_Score), 2)
   ) |>
   kable(
     caption = "Alvarado Risk Score .vs Appendicitis Diagnosis"
   )
 ```
 
--   Alvarado score is a system that have been developed to identify people who are likely to have appendicitis, like a score below 5 suggests against a diagnosis of appendicitis, whereas a score of 7 or more is predictive of acute appendicitis, but it is performance varies. Here added the severity diagnosis to see if the score differs also.
+- Alvarado score is a system that have been developed to identify people who are likely to have appendicitis, as a score below 5 suggests against a diagnosis of appendicitis, while a score of 7 or more is predictive of acute appendicitis, but it is performance varies. Here, the severity of the diagnosis was added to see if the score also differed.
 
-```{r fig.cap="Diagnosis of Appendicitis .vs UltraSonography"}
+
+
+```{r fig.cap="Appendix Diameter .vs Appendicitis Type of Management"}
 pedia_appen_raw |>
-  drop_na(Diagnosis, US_Performed) |>
-  ggplot(aes(x = US_Performed, fill = Diagnosis)) +
-  geom_bar(position = "fill") +
+  drop_na(Appendix_Diameter, Management, Severity) |>
+  ggplot(aes(y = Management, x = Appendix_Diameter)) +
+  geom_boxplot(aes(fill = Management)) +
   labs(
-    title = "Diagnosis of Appendicitis .vs UltraSonography",
-    subtitle = "Divided by if US is Performed or Not",
-    x = "Diagnosis"
+    title = "Appendix Diameter .vs Appendicitis Type of Management",
+    subtitle = "Media Diameter",
+    x = "Management",
+    y = "Appendix Diameter"
   ) +
+  facet_wrap(~Severity) +
   scale_fill_colorblind() +
-  theme_minimal() +
-  theme(
-    plot.title = element_text(hjust = 0.5),
-    plot.subtitle = element_text(hjust = 0.5),
-    axis.title.x = element_text(margin = margin(t = 10)),
-    axis.title.y = element_text(margin = margin(r = 10))
-  ) +
   theme_minimal()
+
+pedia_appen_raw |>
+  drop_na(Appendix_Diameter, Diagnosis) |>
+  ggplot(aes(x = Appendix_Diameter)) +
+  geom_histogram(binwidth = 0.3) +
+  labs(
+    title = "Distribution of Appendix Diameter By Diagnosis",
+    x = "Diagnosis",
+    y = "Appendix Diameter"
+  ) +
+  facet_wrap(~Diagnosis) +
+  scale_fill_colorblind() +
+  theme_minimal()
+
+pedia_appen_raw |>
+  drop_na(Appendix_Diameter, Diagnosis) |>
+  group_by(Diagnosis) |>
+  summarize(
+    mean = round(mean(Appendix_Diameter), 2),
+    median = round(median(Appendix_Diameter), 2)
+  ) |>
+  kable(
+    caption = "Mean of Appendix Diameter By Appendicitis Management"
+  )
 ```
 
--   In cases where the diagnosis is unclear, other methods are preferred like medical imaging for example (CT, US), CT is more accurate but it is expensive and has some side effects, US may be preferred as the first imaging test in children and pregnant women because of the risks associated with radiation exposure from CT scans.
 
+
+- 
 ```{r fig.cap="Severity of Appendicitis .vs Appendicular Abscess	"}
 #| label: Severity of the appendicits
 
@@ -224,104 +249,28 @@ pedia_appen_raw |>
   scale_fill_colorblind()
 ```
 
-```{r fig.cap="Appendix Diameter .vs Appendicitis Type of Management"}
-pedia_appen_raw |>
-  drop_na(Appendix_Diameter, Management, Severity) |>
-  ggplot(aes(y = Management, x = Appendix_Diameter)) +
-  geom_boxplot(aes(fill = Management)) +
-  labs(
-    title = "Appendix Diameter .vs Appendicitis Type of Management",
-    subtitle = "Media Diameter",
-    x = "Management",
-    y = "Appendix Diameter"
-  ) +
-  facet_wrap(~Severity) +
-  scale_fill_colorblind() +
-  theme_minimal()
 
-pedia_appen_raw |>
-  drop_na(Appendix_Diameter, Management) |>
-  group_by(Management) |>
-  summarize(
-    mean = round(mean(Appendix_Diameter), 2)
-  ) |>
-  kable(
-    caption = "Mean of Appendix Diameter By Appendicitis Management"
-  )
-```
+- In severe cases, abscess can be seen and Figure 4 shows that the proportion is higher for complicated cases.
+
+
 
 ## Statistical Analysis
 
 ### Hypothesis testing
 
-Since the use of ultrasound is less expensive and less harmful than CT, we would test if only the introduction of US in the diagnostic process will have a discernible (i.e. significant) difference on the outcome of the diagnosis.
+- Since the use of ultrasound is less expensive and less harmful than CT, it streamlines the diagnostic process.
 
-- To do this, we will use a hypothesis testing framework and set our level of rejection to be 0.05.
+Here we will test if the addition of **appendiceal diameter** will have a discernible difference on the outcome of the diagnosis, the method we will use is hypothesis testing with **randomization**.
 
-1. $$Null~hypothesis$$ There is no difference in the proportion of the outcome if only the US has been used.
+The two populations of interest in this study are pediatric patients who do or do not have appendicitis.
 
-2. $$Alternative~hypothesis$$ There is a difference in the proportion of the outcome if only the US has been used.
-
-
-
-```{r echo=FALSE}
-#| label: hypothsis testing with randomization
-
-set.seed(202025)
-
-pedia_appen_test <- pedia_appen_raw |>
-  drop_na(US_Performed, Diagnosis)
-
-obs_stat <- pedia_appen_test |>
-  specify(Diagnosis ~ US_Performed, success = "no appendicitis") |>
-  calculate(stat = "diff in props", order = c("yes", "no"))
-
-null_dist <- pedia_appen_raw |>
-  drop_na(US_Performed, Diagnosis) |>
-  specify(Diagnosis ~ US_Performed, success = "no appendicitis") |>
-  hypothesize(null = "independence") |>
-  generate(reps = 1000, type = "permute") |>
-  calculate(stat = "diff in props", order = c("yes", "no"))
-
-pvale <- null_dist |>
-  get_p_value(obs_stat = obs_stat, direction = "two sided")
-```
-
-
-
-- Since is p-value is `r round(pvale$p_value, 2)` which bigger than 0.05, we fail to reject null hypothesis.
-So the data does not provide a convincing evidence that only the introduction of US will have a have a discernible difference on the outcome of the diagnosis.
-
-
-
-```{r echo=FALSE}
-#| label: confidence interval1
-
-set.seed(202025)
-
-boot_dist <- pedia_appen_test |>
-  specify(response = Diagnosis, explanatory = US_Performed, success = "appendicitis") |>
-  generate(reps = 1000, type = "bootstrap") |>
-  calculate(stat = "diff in props", order = c("yes", "no"))
-
-ci <- boot_dist |>
-  get_ci()
-
-ci |>
-  kable(
-    digits = 2,
-    caption = "95% Confidence interval for difference in appendicitis diagnosis when ultrasonography is performed"
-  )
-```
-
-
-
-- What if we use the results that came from the US, we check if adding **Appendix Diameter** will have a discernible difference on the outcome of the diagnosis.
+*Let* $p$ *= the true mean of appendix diameter in pediatric patients.
 
 - So our hypotheses are
-1. $$Null~hypothesis$$ There is no difference in the proportion of results when appendix diameter results from US are added.
 
-2. $$Alternative~hypothesis$$ There is a difference in the proportion of the outcome when the appendix diameter results from US is added.
+$H_0: p_{Appendicitis} = p_{no~Appendicitis}$
+
+$H_A: p_{Appendicitis} \ne p_{no~Appendicitis}$
 
 
 
@@ -348,7 +297,7 @@ pvale2 <- null_dist2 |>
 ```
 
 
-- Since the p-value is `r round(pvale2, 2)`, which is less than 0.05, then we reject the null hypothesis, so the data provide convincing evidence that adding **Appendix diameter** will have a discernible difference on the outcome of the diagnosis.
+- With a p-value of `r round(pvale2, 2)`, which is smaller than the discernability level of 0.05, we reject the null hypothesis. The data provide convincing evidence that there is a difference between the mean appendix diameters of pediatric patients with and without appendicitis.
 
 
 
@@ -371,6 +320,11 @@ ci2 |>
     caption = "95% confidence interval for the difference in mean between \n patients diagnosed with appendicitis or no appendicitis."
   )
 ```
+
+
+
+- *We are 95% confident that the mean diameter of the appendix in pediatric patients with "appendicitis" is 3.37 to 3.94 greater than in pediatric patients without appendicitis..*
+
 
 
 
