@@ -1,6 +1,6 @@
 ---
 title: "Exploring Pediatric Appendicitis"
-author: "Muhammad Alakhdar"
+author: "Muhammad al-Akhdar <muhammad3lakder@gmail.com>"
 date: "`r Sys.Date()`"
 output:
   pdf_document: default
@@ -27,6 +27,13 @@ library(kableExtra)
 library(janitor)
 ```
 
+
+# Abstract
+
+In this analysis, we explore the challenges of diagnosing appendicitis, specifically in pediatrics, by analyzing clinical and ultrasound data. We used a concise data science workflow that included data cleaning, exploratory visualizations, hypothesis testing, and logistic regression modeling. This approach not only revealed key differences in clinical characteristics, but also demonstrated how our analysis can improve healthcare decision making. We also discuss the limitations of the current dataset and methodology, and invite constructive feedback and collaboration for further refinement.
+
+
+
 # Introdution
 
 [In 2015, approximately 11.6 million cases of appendicitis were reported, resulting in approximately 50,100 deaths worldwide](https://doi.org/10.1016/S0140-6736(16)31012-1), deaths could be attributed to many reasons, such as lack of access to medicine, quality of care, and medical diagnostic error.
@@ -37,7 +44,7 @@ There are many criteria to do this, such as history taking, physical examination
 
 The accuracy of the diagnosis could be improved, for example, by using machine learning. [A recent study built a model to predict appendicitis in pediatrics using an interpretable unsupervised machine learning method](https://doi.org/10.1016/j.media.2023.103042).
 
-[Since a lot of models have been built using just history and physical examinin as predictors, we would use the same dataset to explore the disease for a bit then build models that focus on ultrasonography as a way to diagnose appendicitis.](https://doi.org/10.5281/zenodo.7711412)
+[Since many models have been built using only history and physical exam as predictors, we would use the same dataset to first explore the disease and then build models focusing on ultrasound as a diagnostic tool.](https://doi.org/10.5281/zenodo.7711412)
 
 
 
@@ -58,7 +65,7 @@ pedia_appen_raw <- read_excel("data/app_data.xlsx",
 - Taking a look at the dataset
 
 ```{r echo=FALSE}
-#| label: A sample look of the dataset
+#| label: Sample data view
 
 pedia_appen_raw |>
   drop_na(Sex, US_Performed, Severity, Management, Diagnosis) |>
@@ -257,9 +264,9 @@ pedia_appen_raw |>
 
 ### Hypothesis testing
 
-- Since the use of ultrasound is less expensive and less harmful than CT, it streamlines the diagnostic process.
+- Since the use of ultrasound is less expensive and less harmful than CT, it might streamline the diagnostic process.
 
-Here we will test if the addition of **appendiceal diameter** will have a discernible difference on the outcome of the diagnosis, the method we will use is hypothesis testing with **randomization**.
+Here we will test if the addition of **appendiceal diameter** will have a discernible difference on the outcome of the diagnosis, the method we will use is hypothesis testing with **randomization**, and set the discernability level to be 0.05 (i.e the level of rejection).
 
 The two populations of interest in this study are pediatric patients who do or do not have appendicitis.
 
@@ -334,9 +341,11 @@ ci2 |>
 We will build Supervised explainable models like logistic regression then test and validate the model.
 
 
-So we will use **cross validation** as way to build the model then we would use **ROC** to check the models precision and accuracy.
+For evaluation metrics will use **Cross Validation** as way to build the model then we would use **ROC** to check the models precision and accuracy.
 
 
+
+- Model 1: Logistic Regression with Alvarado Score
 ```{r include=FALSE}
 #| label: preparing the dataset for the model
 set.seed(22025)
@@ -427,11 +436,17 @@ pedia_appen_roc <-
 ggplot(pedia_appen_roc, aes(x = 1 - specificity, y = sensitivity)) +
   geom_path() +
   geom_abline(lty = 3) +
-  coord_equal()
+  coord_equal() +
+  labs(
+    title = "Precision and Accuracy of Model to Diagnose Appendicitis With Avarado Score",
+    subtitle = "Rate of TP and TN"
+  )
 ```
 
 
 
+
+- Model 2: Multivariate Logistic Regression
 ```{r include=FALSE}
 #| label: training the model
 set.seed(22025)
@@ -494,8 +509,14 @@ pedia_appen_roc1 <-
 ggplot(pedia_appen_roc1, aes(x = 1 - specificity, y = sensitivity)) +
   geom_path() +
   geom_abline(lty = 3) +
-  coord_equal()
+  coord_equal() +
+  labs(
+    title = "Precision and Accuracy of Model to Diagnose Appendicitis With Avarado Score",
+    subtitle = "Rate of TP and TN"
+  )
 ```
+
+
 
 ```{r echo=FALSE, fig.cap="Comparing the Accuracy and Precision of both Models"}
 #| label: Comparing models
@@ -521,12 +542,39 @@ bind_rows(
 
 ### Diagnosing
 
+Predicting a case with these values Alvarado Score = 6, Appendix Diameter = 10, Weight = 30, BMI = 20, using out second model we built.
+
 ```{r echo=FALSE}
 #| label: Predicting appendicitis outcome
 
 case <- tibble(Alvarado_Score = 6, Appendix_Diameter = 10, Weight = 30, BMI = 20)
 
 
-predict(pedia_appen_model1, case, type="prob")
+predict(pedia_appen_model1, case, type="prob") |>
+  kable(
+    caption = "Prediction Probabilities for a Sample Case"
+  )
 ```
+
+
+
+
+# Limitations
+
+While our analysis provides valuable insights, there are limitations that we should note:
+
+1- Generalizability: The data set is derived from a single hospital cohort, which may limit the generalizability of our findings.
+
+2- Model assumptions: Logistic regression assumes linearity between predictors and log odds of the outcome, which we did not test.
+
+3- Potential biases: We do not address the possibility of selection bias and measurement error in clinical assessments.
+
+4- Data quality: Missing values and potential data entry errors could affect model performance.
+Future work could explore validation of the results with external datasets.
+
+
+
+# Conclusion
+
+This analysis demonstrates an approach to diagnosing pediatric appendicitis by combining statistical analysis with machine learning. Our findings explore the potential of combining clinical scores with imaging results to improve diagnostic accuracy. We welcome any constructive feedback and collaboration to further refine this analysis. **If you have any suggestions or would like to collaborate, please contact us via the discussion forum or email**.
 
