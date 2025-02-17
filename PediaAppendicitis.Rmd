@@ -70,11 +70,10 @@ pedia_appen_raw <- read_excel("data/app_data.xlsx",
 pedia_appen_raw |>
   drop_na(Sex, US_Performed, Severity, Management, Diagnosis) |>
   select(Sex, US_Performed, Severity, Management, Diagnosis) |>
-  glimpse() |>
   sample_n(10) |>
   kable(
     caption = "First Ten Rows of the Pediatric Patients Dataset"
-  ) 
+  )
 
 
 missing_values <- sum(is.na(pedia_appen_raw))
@@ -111,7 +110,7 @@ pedia_appen_raw |>
   ) |>
   kable(
     caption = "The Mean Age of Patients By Gender"
-  ) 
+  )
 ```
 
 
@@ -128,7 +127,7 @@ pedia_appen_raw |>
   labs(
     x = "Diagnosis",
     y = "Prop",
-    title = "prevalence of Appendicitis by Gender",
+    title = "Prevalence of Appendicitis by Gender",
     fill = "Gender"
   ) +
   theme(
@@ -256,7 +255,7 @@ pedia_appen_raw |>
 ```
 
 
-- In severe cases, abscess can be seen and Figure 4 shows that the proportion is higher for complicated cases.
+- In severe cases, abscess can be seen and this Figure shows that the proportion is higher for complicated cases.
 
 
 
@@ -264,7 +263,7 @@ pedia_appen_raw |>
 
 ### Hypothesis testing
 
-- Since the use of ultrasound is less expensive and less harmful than CT, it might streamline the diagnostic process.
+- Since the use of ultrasound is less expensive and less harmful than CT, we will use ultrasound data here to see the impact on the diagnostic process.
 
 Here we will test if the addition of **appendiceal diameter** will have a discernible difference on the outcome of the diagnosis, the method we will use is hypothesis testing with **randomization**, and set the discernability level to be 0.05 (i.e the level of rejection).
 
@@ -323,7 +322,7 @@ ci2 <- boot_dist2 |>
 ci2 |>
   kable(
     digits = 2,
-    caption = "95% confidence interval for the difference in mean between \n patients diagnosed with appendicitis or no appendicitis."
+    caption = "95% confidence interval for the difference in mean of appendiceal diameter between \n patients diagnosed with appendicitis or no appendicitis."
   )
 ```
 
@@ -336,9 +335,9 @@ ci2 |>
 
 ### Modeling
 
-- To help the health workers make more informed decisions (i.e, Accurately diagnosing the appendicitis) we would use machine learning.
+- To help the health workers make more informed decisions (i.e, Accurately diagnosing the appendicitis) we would use a supervised machine learning.
 
-We will build Supervised explainable models like logistic regression then test and validate the model.
+We will build Supervised explainable models using logistic regression then test and validate the model.
 
 
 For evaluation metrics will use **Cross Validation** as way to build the model then we would use **ROC** to check the models precision and accuracy.
@@ -544,13 +543,16 @@ bind_rows(
 
 Predicting a case with these values Alvarado Score = 6, Appendix Diameter = 10, Weight = 30, BMI = 20, using out second model we built.
 
+
+
+
 ```{r echo=FALSE}
 #| label: Predicting appendicitis outcome
 
 case <- tibble(Alvarado_Score = 6, Appendix_Diameter = 10, Weight = 30, BMI = 20)
 
 
-predict(pedia_appen_model1, case, type="prob") |>
+predict(pedia_appen_model1, case, type = "prob") |>
   kable(
     caption = "Prediction Probabilities for a Sample Case"
   )
@@ -559,8 +561,11 @@ predict(pedia_appen_model1, case, type="prob") |>
 
 
 
-# Limitations
 
+
+
+
+# Limitations
 While our analysis provides valuable insights, there are limitations that we should note:
 
 1- Generalizability: The data set is derived from a single hospital cohort, which may limit the generalizability of our findings.
@@ -577,4 +582,3 @@ Future work could explore validation of the results with external datasets.
 # Conclusion
 
 This analysis demonstrates an approach to diagnosing pediatric appendicitis by combining statistical analysis with machine learning. Our findings explore the potential of combining clinical scores with imaging results to improve diagnostic accuracy. We welcome any constructive feedback and collaboration to further refine this analysis. **If you have any suggestions or would like to collaborate, please contact us via the discussion forum or email**.
-
